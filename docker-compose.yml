@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    ports:
+      - "8001:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Simplified healthcheck that doesn't require 'curl'
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ticket-service:
+    build: ./services/ticket-service
+    container_name: ticket-service
+    ports:
+      - "8002:8000"
+    depends_on:
+      - auth-service
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: notification-service
+    ports:
+      - "8003:8000"
+    depends_on:
+      - auth-service
+
+  frontend:
+    build: ./frontend
+    container_name: frontend-dashboard
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+      - ticket-service
